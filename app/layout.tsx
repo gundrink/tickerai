@@ -26,7 +26,10 @@ const mono = IBM_Plex_Mono({
 export const metadata: Metadata = {
   title: "TickerAI",
   description: "Every observed candidate wearing a ticker, ranked by liquidity and trader evidence. Heuristic, not proof.",
-  icons: { icon: "/mark.svg" },
+  icons: {
+    icon: "/mark.png",
+    apple: "/apple-touch-icon.png",
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

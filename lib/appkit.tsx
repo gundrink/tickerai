@@ -29,7 +29,7 @@ createAppKit({
     name: "TickerAI",
     description: "Every candidate wearing a ticker, scored as a heuristic.",
     url: origin,
-    icons: [`${origin}/mark.svg`],
+    icons: [`${origin}/mark.png`],
   },
   features: {
     analytics: false,

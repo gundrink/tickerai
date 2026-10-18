@@ -144,7 +144,6 @@ code {
 .brand-mark {
   width: 1.8rem;
   height: 1.8rem;
-  animation: mark-spin 18s linear infinite;
 }
 
 .site-nav {
@@ -745,7 +744,6 @@ h2 {
 .connect-mark {
   width: 5.5rem;
   height: 5.5rem;
-  animation: mark-spin 16s linear infinite;
 }
 
 .connect-panel h1 {
@@ -1231,10 +1229,6 @@ h2 {
 @keyframes beam-run {
   from { transform: translate3d(-40vw, 0, 0); }
   to { transform: translate3d(140vw, 0, 0); }
-}
-
-@keyframes mark-spin {
-  to { transform: rotate(360deg); }
 }
 
 @keyframes pill-pulse {

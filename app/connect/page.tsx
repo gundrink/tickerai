@@ -20,7 +20,7 @@ export default function ConnectPage() {
       <SiteHeader current="connect" />
       <main className="connect-stage">
         <section className="connect-panel" aria-label="Connect wallet">
-          <img className="connect-mark" src="/mark.svg" alt="" width={96} height={96} />
+          <img className="connect-mark" src="/mark.png" alt="" width={96} height={96} />
           <p className="connect-kicker">{clusterLabel[publicEnv.cluster]}</p>
           <h1>Connect a wallet</h1>
           <p className="connect-lead">The wallet opens on {publicEnv.cluster}. Email and social login stay off.</p>

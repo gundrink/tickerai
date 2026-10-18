@@ -129,12 +129,12 @@ code { font-family: var(--font-data); font-size: 0.9em; }
 }
 .wordmark { display: inline-flex; align-items: center; gap: .55rem; }
 .wordmark:hover { text-decoration: none; }
-.wm-accent { color: var(--accent); }
-.brand-dot {
-  width: 11px; height: 11px;
-  background: var(--accent);
-  border-radius: 2px;
-  box-shadow: 0 0 12px color-mix(in srgb, var(--accent) 60%, transparent);
+.wm-accent { color: var(--accent); font-style: normal; }
+.brand-logo {
+  width: 28px;
+  height: 28px;
+  flex: none;
+  border-radius: 6px;
 }
 .topbar-actions { display: flex; align-items: center; gap: .5rem; }
 .icon-btn {

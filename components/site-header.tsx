@@ -9,7 +9,7 @@ export function SiteHeader({ current }: { current: "home" | "desk" | "connect" }
     <header className={current === "home" ? "site-header" : "site-header site-header-app"}>
       <div className="brand-cluster">
         <Link href="/" className="wordmark" aria-label="TickerAI">
-          <img className="brand-mark" src="/mark.svg" alt="" width={28} height={28} />
+          <img className="brand-mark" src="/mark.png" alt="" width={28} height={28} />
           <span className="brand-name">
             Ticker<em>AI</em>
           </span>
