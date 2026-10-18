@@ -1,0 +1,159 @@
+# AmbiguityDesk
+
+**"PEPE yang mana yang layak dicek?"** — a standalone ticker-collision resolver for DEX traders.
+
+Type a ticker, get every observed candidate wearing it across the chains
+CoinMarketCap DEX tracks, plus the deployment best supported by the evidence —
+labeled honestly as a heuristic, never as proof.
+
+Live Pages build: **https://ambiguitydesk.pages.dev** · Repo: `github.com/alfindigital/ambiguitydesk`
+
+The Next.js app in `app/` is the local desk: landing, `/desk`, and a Solana wallet connect page. `NEXT_PUBLIC_SOLANA_CLUSTER=devnet` points the wallet and Solana explorer links at devnet. Replay fixtures still answer `/api/resolve` when `CMC_API_KEY` is empty.
+
+Sibling project of Verdex (same evidence discipline, same "Evidence Desk"
+visual language). Built on the **CoinMarketCap DEX API**.
+
+## The problem
+
+Hundreds of tokens share the same symbol. `PEPE` alone returns 32 exact-symbol
+matches across 11 chains in a single `/v1/dex/search` call. Traders buy the
+wrong one all the time. Existing resolvers are either static directories,
+single-chain registries, or paid per-candidate lookups.
+
+## What it does (v2)
+
+1. Query `/v1/dex/search?q=<ticker|address>&limit=100` — one call, one credit,
+   up to 100 rows (bounded coverage, shown in the UI).
+2. Split results into **exact-symbol matches** vs **related**, and cut
+   **off-chain venue rows** (Robinhood & friends — `/v1/dex/search` mixes them
+   with DEX pools; trader counts aren't comparable across venue types).
+3. Cluster same-address rows across chains (incl. bridge refs like
+   `eth-0x6982….omft.near`), so mirrored deployments are grouped — shown as
+   "same address, relationship unverified", not assumed bridged.
+4. Score each candidate: **`liquidity × unique-traders-24h`**, then apply
+   honesty penalties — `young-pool` (<30 days since `fpct`/`fpt`) halves the
+   effective score, `possible-farming` (traders-per-$100k-liquidity anomaly on
+   pools under $1M) removes pick eligibility. Deep pools are exempt — a crowded
+   $6M pool is evidence, not a farm (Solana BONK).
+5. Detect **canonical multi-chain assets**: when one positive `cid` shows deep
+   pools on ≥3 chains, there is no single winner — it's **family mode**, best
+   pool per chain. Asking "which USDT is real" is the wrong question.
+6. Stamp a **BEST PICK** (`clear-lead` ≥3×, `close-call`, `only-candidate`) —
+   heuristic, not proof — or **abstain** (`resolution: "none"`) when no exact
+   symbol matches, every candidate is farming-flagged, or no candidate has
+   both liquidity and trader data. No pick is better than a wrong pick.
+
+### Why the pick is a 3-signal read, not one number
+
+Real data proved single metrics are gameable:
+
+- The real PEPE (Ethereum): `$34.16M liq × 554 ut24h`. A Solana clone:
+  `$0.21M liq × 3,086 ut24h` — **more traders than the canonical one**. Sort by
+  traders → recommend the clone. The product of the two wins 21×.
+- PI: a "Pump Inu" clone carried **8,255 unique traders on an $83.7K pool** —
+  a textbook farming signature. It now gets `possible-farming` and is
+  excluded from the pick.
+- Pool age (`fpct`/`fpt`) can't be bought: the real PEPE's pool is from April
+  2023; clones were born last week.
+- One Arbitrum row reports `mc ≈ 1e23` — market cap is inflatable via supply,
+  so it's a flag (`mcap-inflated`), never a sort key.
+
+### Caveat, stated on every result
+
+> Scored on observed liquidity × unique traders. A bought pool and farmed
+> wallets can fake both. Read the table before trusting the stamp.
+
+## CMC API usage (named endpoints)
+
+- `GET /v1/dex/search?q=<ticker|address>&limit=100` — the whole collision map
+  in **one call / one credit**. Fields used per row: `plt`, `addr`, `n`, `s`,
+  `liq`, `ut24h`, `mc`, `pc24h`, `v24h`, `l`, `cid`, `fpt`, `fpct`.
+
+**Evidence of a real call:** `functions/api/resolve.js` calls
+`https://pro-api.coinmarketcap.com/v1/dex/search` server-side with
+`X-CMC_PRO_API_KEY`, returns `{ bodySha256, credits, capturedAt }` per query,
+and every fixture in `fixtures/` stores the **raw upstream body** (`bodyRaw`)
+plus its sha256 — replay re-hashes the bytes and reports `receiptVerified`.
+
+### What the API made possible — and where it got in the way
+
+Made possible: multi-chain breadth in a single cheap call, and `ut24h`
+(unique traders) — a field DexScreener/GeckoTerminal don't expose.
+
+Got in the way (feedback for the API team):
+- `/v1/dex/search` mixes **off-chain venues** (Robinhood…) with DEX pools —
+  `ut24h` across venue types isn't comparable; a `venueType` field would fix it.
+- Results are **bounded per query** (we request `limit=100`) — for
+  mega-collisions the tail is invisible; the UI states the bound.
+- `mc` is supply-inflatable and arrives dirty (`1e23`); a sanity flag helps.
+
+## Architecture
+
+```
+ambiguitydesk/
+├── index.html                  # the desk
+├── css/style.css               # Evidence Desk visual system (Verdex direction A)
+├── js/app.js                   # fetch → states → exhibit rows (no framework)
+├── functions/api/resolve.js    # Pages Function: CMC proxy + scoring + clustering
+├── fixtures/*.json             # 48 committed replay captures (raw bodies, sha256-verified)
+├── specs/                      # PRODUCT_SPEC + TECH_SPEC (v2 upgrade)
+├── audit/probe-*.json          # live-probe evidence from the deep audit
+├── fonts/ icons/
+├── tools/
+│   ├── capture-fixtures.mjs    # live capture → fixture (needs CMC key)
+│   ├── make-icons.js           # zero-dep PNG icon generator
+│   ├── probe-live.mjs          # run queries through the resolver live
+│   ├── build-dist.js           # whitelist dist builder — see below
+│   └── test-resolve.mjs        # offline resolver unit tests (49 assertions)
+└── dist/                       # built artifact — the ONLY thing that deploys
+```
+
+**Live mode**: set `CMC_API_KEY` as a Pages secret → the Function calls CMC
+server-side; the key never reaches the browser.
+
+**Replay mode**: no key → the Function serves committed fixtures via
+`env.ASSETS`. Unknown tickers get an honest 404, never invented data.
+
+**Deploy whitelist**: `tools/build-dist.js` copies ONLY public files to
+`dist/`. Docs, `.env*`, and `tools/` never ship.
+
+## Commands
+
+```bash
+npm install
+cp .env.example .env.local           # set Reown id; cluster defaults to devnet
+npm run dev                          # Next desk → http://localhost:3000
+node tools/test-resolve.mjs          # offline tests (no key needed)
+node tools/build-dist.js             # build dist/
+wrangler pages dev dist              # legacy static preview → http://127.0.0.1:8788
+wrangler pages deploy dist --project-name ambiguitydesk
+```
+
+## Design
+
+Inherits Verdex "Evidence Desk" (direction A): Fraunces display, IBM Plex Mono
+for data, warm-green dark palette, exhibit numbering, rotated paper stamp.
+Dials: ENERGY 2 · RHYTHM 2 · MOTION 1. Dark only. No gradients, no glow, no
+fake terminal chrome.
+
+## Deliberately no AI
+
+The pick is a ranking, not a judgment — determinism is the product. Every
+number in the UI traces to a sha256-hashed response body you can replay.
+
+## Known limits
+
+- One credit per live query; search is name/symbol/address substring, not
+  semantic. Coverage is DEX-visible only — CEX-native assets (e.g. Pi Network)
+  may be underrepresented.
+- `$`-prefixed symbols are normalized to the bare ticker (`$WIF` ≈ `WIF`).
+- Rows without `liq` or `ut24h` are shown but can't be scored — they render
+  `unknown` / `no score`, not zero.
+- Replay mode covers only the committed fixture tickers; on upstream failure
+  with a key configured, a fixture is served labeled `stale-replay`.
+- The heuristic can't prove authenticity — it ranks evidence. Same-address
+  clustering marks string matches; it does not prove issuer/bridge
+  relationship. CEX venue detection uses a name registry — unmapped venues are
+  shown and flagged, not guessed.
+
+Not financial advice. An evidence desk, not a verdict.

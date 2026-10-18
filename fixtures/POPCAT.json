@@ -1,0 +1,9 @@
+{
+  "query": "POPCAT",
+  "endpoint": "/v1/dex/search?limit=100",
+  "capturedAt": "2026-09-30T23:19:41.689Z",
+  "httpStatus": 200,
+  "credits": 1,
+  "bodySha256": "8083890bc7cf52d069a804c3718cb6497699ec50f9b98036a2f0e1f19e10743b",
+  "bodyRaw": "{\"data\":{\"total\":1,\"tks\":[{\"pltId\":16,\"plt\":\"Solana\",\"plti\":5426,\"n\":\"Popcat\",\"s\":\"POPCAT\",\"addr\":\"7GCihgDB8fe6KNjn2MYtkzZcRjQy3t9GHdC8uHYmW2hr\",\"pt\":\"1702413767000\",\"lt\":\"1789773109000\",\"w\":\"https://www.popcatsolana.xyz/\",\"x\":\"https://twitter.com/POPCATSOLANA\",\"l\":\"https://s2.coinmarketcap.com/static/img/coins/64x64/28782.png\",\"pu\":\"0.05254962714238959439615631763867658\",\"pc24h\":-0.0088,\"dec\":9,\"tsup\":\"979932468.600748562\",\"fpt\":\"1740774050000\",\"fpct\":\"1716313317000\",\"v24h\":550456.754752282067891636,\"mc\":51495085.849690735593571149,\"liq\":4706359.720720205056871993,\"ts\":\"1790804426000\",\"lf\":1,\"cid\":28782,\"ut24h\":\"1347\",\"ecs\":0}]},\"status\":{\"timestamp\":\"2026-09-30T23:19:41.675Z\",\"error_code\":\"0\",\"error_message\":\"\",\"elapsed\":180,\"credit_count\":1}}"
+}
